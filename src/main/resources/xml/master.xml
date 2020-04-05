@@ -1,20 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <databaseChangeLog
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <include file="classpath:mdata/config/liquibase/version1.0.0/init.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.0.0/release20190114.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.1.0/release1.1.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.2.0/release1.2.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.3.0/release1.3.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.4.0/release1.4.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.5.0/release1.5.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version1.6.0/release1.6.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version2.1.0/release2.1.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version2.2.0/release2.2.0.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:mdata/config/liquibase/version2.3.0/release2.3.0.xml" relativeToChangelogFile="false"/>
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <include file="classpath:xml/version1.xml" relativeToChangelogFile="false"/>
 
     <!-- 初始化数据最后执行 -->
     <include file="classpath:mdata/config/liquibase/data/init-data.xml" relativeToChangelogFile="false"/>

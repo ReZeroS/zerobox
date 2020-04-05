@@ -1,10 +1,19 @@
 package club.qqtim.definition.support.liquibase;
 
-/**
- * @version: 1.0
- * @author: jie.li13@hand-china.com
- * @date: 2020/4/3
- * @description:
- */
+import club.qqtim.definition.support.liquibase.tag.CreateTable;
+import club.qqtim.definition.support.liquibase.tag.Tag;
+import lombok.Data;
+
+import java.util.List;
+
+
+@Data
 public class ChangeSet {
+
+    private String id;
+
+    private String author;
+
+    private List<CreateTable> createTable;
+
 }
