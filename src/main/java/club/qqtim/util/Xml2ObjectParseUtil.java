@@ -52,8 +52,9 @@ public final class Xml2ObjectParseUtil {
                     // child element search the field
                     //
                     // issue: how to get the generic type of the list like List<Demo> => Demo.class
+                    // tips: java will erase the real type when
+                    // handle: this is a 'try step' which supposed to be parse correctly
 
-                    //
                     Class listType = getListType(field);
                     List list = new ArrayList();
                     Iterator iterator = element.elementIterator();
@@ -85,7 +86,7 @@ public final class Xml2ObjectParseUtil {
     public static Class getFieldGenericType(Field field) {
         if (ParameterizedType.class.isAssignableFrom(field.getGenericType().getClass())) {
             ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-            return ((Class) (genericType.getActualTypeArguments()[0])).getSuperclass();
+            return ((Class) (genericType.getActualTypeArguments()[0]));
         }
         //Returns dummy Boolean Class to compare with ValueObject & FormBean
         return new Boolean(false).getClass();
