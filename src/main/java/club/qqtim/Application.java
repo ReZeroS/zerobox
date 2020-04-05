@@ -1,10 +1,12 @@
 package club.qqtim;
 
-import club.qqtim.executor.Executor;
-import club.qqtim.executor.support.ValidExecutor;
-
-import java.util.ArrayList;
-import java.util.List;
+import club.qqtim.config.ManagerConfig;
+import club.qqtim.executor.support.LiquibaseValidExecutor;
+import club.qqtim.factory.reader.LiquibaseXmlReader;
+import club.qqtim.factory.support.LiquibaseFactory;
+import club.qqtim.manager.Manager;
+import club.qqtim.manager.support.LiquibaseManager;
+import club.qqtim.meta.ClassPathResource;
 
 /**
  * @version: 1.0
@@ -16,13 +18,13 @@ public class Application {
 
 
     public static void main(String[] args) {
-        List<Executor> executors = loadExecutors();
-        executors.forEach(Executor::execute);
+        ManagerConfig config = new ManagerConfig();
+        config.setReader(new LiquibaseXmlReader());
+        config.setAbstractFactory(new LiquibaseFactory());
+        config.setResource(new ClassPathResource("xml/master.xml"));
+        config.setExecutor(new LiquibaseValidExecutor("valid.json"));
+        Manager liquibaseManager = new LiquibaseManager(config);
+        liquibaseManager.manage();
     }
 
-    private static List<Executor> loadExecutors() {
-        List<Executor> executors = new ArrayList<>();
-        executors.add(new ValidExecutor());
-        return executors;
-    }
 }

@@ -12,17 +12,20 @@ import java.util.StringTokenizer;
  */
 public abstract class StringUtils {
 
-    public static boolean hasLength(String str) {
-        return hasLength((CharSequence) str);
+    public static boolean isNotEmpty(String str) {
+        return isNotEmpty((CharSequence) str);
     }
-    public static boolean hasLength(CharSequence str) {
+
+    public static boolean isNotEmpty(CharSequence str) {
         return (str != null && str.length() > 0);
     }
-    public static boolean hasText(String str) {
-        return hasText((CharSequence) str);
+
+    public static boolean isNotBlank(String str) {
+        return isNotBlank((CharSequence) str);
     }
-    public static boolean hasText(CharSequence str) {
-        if (!hasLength(str)) {
+
+    public static boolean isNotBlank(CharSequence str) {
+        if (!isNotEmpty(str)) {
             return false;
         }
         int strLen = str.length();
@@ -33,8 +36,9 @@ public abstract class StringUtils {
         }
         return false;
     }
+
     public static String trimAllWhitespace(String str) {
-        if (!hasLength(str)) {
+        if (!isNotEmpty(str)) {
             return str;
         }
         StringBuilder sb = new StringBuilder(str);
@@ -42,8 +46,7 @@ public abstract class StringUtils {
         while (sb.length() > index) {
             if (Character.isWhitespace(sb.charAt(index))) {
                 sb.deleteCharAt(index);
-            }
-            else {
+            } else {
                 index++;
             }
         }
@@ -83,7 +86,7 @@ public abstract class StringUtils {
     }
 
     public static String replace(String inString, String oldPattern, String newPattern) {
-        if (!hasLength(inString) || !hasLength(oldPattern) || newPattern == null) {
+        if (!isNotEmpty(inString) || !isNotEmpty(oldPattern) || newPattern == null) {
             return inString;
         }
         StringBuilder sb = new StringBuilder();
@@ -105,23 +108,24 @@ public abstract class StringUtils {
     public static String[] commaDelimitedListToStringArray(String str) {
         return delimitedListToStringArray(str, ",");
     }
+
     public static String[] delimitedListToStringArray(String str, String delimiter) {
         return delimitedListToStringArray(str, delimiter, null);
     }
+
     public static String[] delimitedListToStringArray(String str, String delimiter, String charsToDelete) {
         if (str == null) {
             return new String[0];
         }
         if (delimiter == null) {
-            return new String[] {str};
+            return new String[]{str};
         }
         List<String> result = new ArrayList<String>();
         if ("".equals(delimiter)) {
             for (int i = 0; i < str.length(); i++) {
                 result.add(deleteAny(str.substring(i, i + 1), charsToDelete));
             }
-        }
-        else {
+        } else {
             int pos = 0;
             int delPos;
             while ((delPos = str.indexOf(delimiter, pos)) != -1) {
@@ -137,7 +141,7 @@ public abstract class StringUtils {
     }
 
     public static String deleteAny(String inString, String charsToDelete) {
-        if (!hasLength(inString) || !hasLength(charsToDelete)) {
+        if (!isNotEmpty(inString) || !isNotEmpty(charsToDelete)) {
             return inString;
         }
         StringBuilder sb = new StringBuilder();
@@ -149,5 +153,40 @@ public abstract class StringUtils {
         }
         return sb.toString();
     }
+
+    /**
+     * <p>Removes a substring only if it is at the beginning of a source string,
+     * otherwise returns the source string.</p>
+     *
+     * <p>A {@code null} source string will return {@code null}.
+     * An empty ("") source string will return the empty string.
+     * A {@code null} search string will return the source string.</p>
+     *
+     * <pre>
+     * StringUtils.removeStart(null, *)      = null
+     * StringUtils.removeStart("", *)        = ""
+     * StringUtils.removeStart(*, null)      = *
+     * StringUtils.removeStart("www.domain.com", "www.")   = "domain.com"
+     * StringUtils.removeStart("domain.com", "www.")       = "domain.com"
+     * StringUtils.removeStart("www.domain.com", "domain") = "www.domain.com"
+     * StringUtils.removeStart("abc", "")    = "abc"
+     * </pre>
+     *
+     * @param str    the source String to search, may be null
+     * @param remove the String to search for and remove, may be null
+     * @return the substring with the string removed if found,
+     * {@code null} if null String input
+     * @since 2.1
+     */
+    public static String removeStart(final String str, final String remove) {
+        if (!isNotBlank(str) || !isNotBlank(remove)) {
+            return str;
+        }
+        if (str.startsWith(remove)) {
+            return str.substring(remove.length());
+        }
+        return str;
+    }
+
 
 }
