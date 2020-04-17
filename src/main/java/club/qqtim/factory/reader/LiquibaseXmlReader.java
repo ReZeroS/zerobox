@@ -53,7 +53,7 @@ public class LiquibaseXmlReader implements Reader {
     }
 
     @Override
-    public void loadChangeSets() {
+    public void loadData() {
         try (InputStream inputStream = resource.getInputStream()) {
             SAXReader saxReader = new SAXReader();
             Document doc = saxReader.read(inputStream);
@@ -97,21 +97,21 @@ public class LiquibaseXmlReader implements Reader {
         this.registry.registerChangeSet(element.attributeValue(ID_ATTRIBUTE), changeSet);
     }
 
-    private List<Tag> parseTags(Element root) {
-        Iterator iterator = root.elementIterator();
-        List<Tag> tags = new ArrayList<>();
-        while (iterator.hasNext()) {
-            Element element = (Element) iterator.next();
-            if (TagConstants.CREATE_TABLE.equals(element.getName())) {
-                CreateTable createTable = Xml2ObjectParseUtil.parse(element, CreateTable.class);
-
-            }
-
-        }
-
-
-        return new ArrayList<>();
-    }
+//    private List<Tag> parseTags(Element root) {
+//        Iterator iterator = root.elementIterator();
+//        List<Tag> tags = new ArrayList<>();
+//        while (iterator.hasNext()) {
+//            Element element = (Element) iterator.next();
+//            if (TagConstants.CREATE_TABLE.equals(element.getName())) {
+//                CreateTable createTable = Xml2ObjectParseUtil.parse(element, CreateTable.class);
+//
+//            }
+//
+//        }
+//
+//
+//        return new ArrayList<>();
+//    }
 
     private void parsePathInclude(String path) {
         // path format

@@ -10,7 +10,7 @@ import club.qqtim.meta.ClassPathResource;
 
 /**
  * @version: 1.0
- * @author: jie.li13@hand-china.com
+ * @author: rezeros.github.io
  * @date: 2020/4/3
  * @description:
  */
@@ -25,6 +25,7 @@ public class Application {
         config.setExecutor(new LiquibaseValidExecutor("valid.json"));
         Manager liquibaseManager = new LiquibaseManager(config);
         liquibaseManager.manage();
+        liquibaseManager.execute();
     }
 
 }

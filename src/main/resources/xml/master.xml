@@ -6,5 +6,5 @@
     <include file="classpath:xml/version1.xml" relativeToChangelogFile="false"/>
 
     <!-- 初始化数据最后执行 -->
-    <include file="classpath:mdata/config/liquibase/data/init-data.xml" relativeToChangelogFile="false"/>
+<!--    <include file="classpath:mdata/config/liquibase/data/init-data.xml" relativeToChangelogFile="false"/>-->
 </databaseChangeLog>
