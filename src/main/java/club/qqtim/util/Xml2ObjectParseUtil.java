@@ -5,6 +5,7 @@ import org.dom4j.Attribute;
 import org.dom4j.Element;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,21 +40,23 @@ public final class Xml2ObjectParseUtil {
                 .collect(Collectors.toMap(Attribute::getName, Attribute::getValue, (o, n) -> n));
 
         try {
-            D result = clazz.newInstance();
+            D result = clazz.getDeclaredConstructor().newInstance();
             Field[] fields = result.getClass().getDeclaredFields();
 
             for (Field field : fields) {
                 // reflection utils force set the field value
                 ReflectionUtils.makeAccessible(field);
                 boolean existAttribute = attributeMap.containsKey(field.getName());
-                if (existAttribute) {
+                // exist attribute  or  not child element(not assign collection)
+                if (existAttribute || !Collection.class.isAssignableFrom(field.getType())) {
                     field.set(result, attributeMap.get(field.getName()));
                 } else {
                     // child element search the field
                     //
                     // issue: how to get the generic type of the list like List<Demo> => Demo.class
+                    // tips: java will erase the real type when
+                    // handle: this is a 'try step' which supposed to be parse correctly
 
-                    //
                     Class listType = getListType(field);
                     List list = new ArrayList();
                     Iterator iterator = element.elementIterator();
@@ -69,6 +72,8 @@ public final class Xml2ObjectParseUtil {
             return result;
         } catch (InstantiationException e) {
 
+        } catch (NoSuchMethodException | InvocationTargetException e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -85,7 +90,7 @@ public final class Xml2ObjectParseUtil {
     public static Class getFieldGenericType(Field field) {
         if (ParameterizedType.class.isAssignableFrom(field.getGenericType().getClass())) {
             ParameterizedType genericType = (ParameterizedType) field.getGenericType();
-            return ((Class) (genericType.getActualTypeArguments()[0])).getSuperclass();
+            return ((Class) (genericType.getActualTypeArguments()[0]));
         }
         //Returns dummy Boolean Class to compare with ValueObject & FormBean
         return new Boolean(false).getClass();

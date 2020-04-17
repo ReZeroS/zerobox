@@ -5,7 +5,7 @@ import club.qqtim.meta.Resource;
 
 public interface Reader {
 
-    void loadChangeSets();
+    void loadData();
 
     void loadResource(Resource resource);
 
