@@ -36,7 +36,7 @@ public abstract class AbstractManager implements Manager {
 
         reader.registryFactory(abstractFactory);
 
-        reader.loadChangeSets();
+        reader.loadData();
 
     }
 
