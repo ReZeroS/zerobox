@@ -84,6 +84,7 @@ buildNumber.properties
 
 ### VisualStudioCode ###
 .vscode/*
+.settings/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
