@@ -1,4 +1,4 @@
 package club.qqtim.definition;
 
-public class ChangeSetDefinition {
+public class ChangeSetDefinition implements Definition {
 }
