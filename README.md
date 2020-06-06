@@ -1,11 +1,11 @@
 # Introduction
 # <img src="./logo.png" width="250px" align="center" alt="ZeroBox"/>
-The Zero-Box uses some popular lite framework based on the java language to build a collection of tools for common developing.
+The Zero-Box uses some popular lite framework based on the java language to build a collection of tools for common developping.
 
 # Features
 * Supports the convertor for object and xml. You can try create object in your package and declare the package in config annotation(@XmlObjectPackageScan), then the framework will try to convert them for both way.
 
-* Support the Common util. I try to collect some util for common developing and will try to optimize them in the future.
+* Support the common util. I collect some util for common developing and will try to optimize them in the future.
 
 * Support some beta framework tool like muliti thread insert tool with transaction promised in spring.
 
