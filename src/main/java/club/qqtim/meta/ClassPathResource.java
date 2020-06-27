@@ -12,8 +12,8 @@ public class ClassPathResource implements Resource {
 
     private static final String CLASSPATH_ADDRESS = "classpath:";
 
-    private String path;
-    private ClassLoader classLoader;
+    private final String path;
+    private final ClassLoader classLoader;
 
 
     public ClassPathResource(String path) {
