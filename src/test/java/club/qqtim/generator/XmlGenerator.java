@@ -106,7 +106,7 @@ public class XmlGenerator {
 
 
     public void persistXmlFile() {
-        try (FileWriter out = new FileWriter("foo.xml")){
+        try (FileWriter out = new FileWriter("wbc.xml")){
             root.write(out);
         } catch (IOException e) {
             throw new ProcessException("Persist xml file failed");
