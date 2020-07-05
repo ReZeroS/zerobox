@@ -8,7 +8,7 @@ import java.util.List;
  * @Date: 4/8/19 8:32 PM
  * @Version 1.0
  */
-public class MessageTracker {
+public final class MessageTracker {
 
     private static List<String> MESSAGES = new ArrayList<String>();
 
