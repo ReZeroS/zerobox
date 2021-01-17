@@ -1,9 +1,13 @@
 package club.qqtim.util;
 
+import org.apache.commons.beanutils.BeanUtils;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Author: ReZero
@@ -186,6 +190,29 @@ public abstract class StringUtils {
             return str.substring(remove.length());
         }
         return str;
+    }
+    private static final String ARG_EXPRESSION = "\\$\\{(.+?)}";
+
+    /**
+     * @param txt   String str = "<a onclick=\"sho ${node.count} wUserName('${arr[0]}','${node.desc}');\" >linkme</a>" ;
+     * @param response parsed args
+     * 返回渲染好的文本
+     */
+    public static String renderTxt(String txt, Object response)  {
+        Pattern pattern = Pattern.compile(ARG_EXPRESSION);
+        Matcher matcher = pattern.matcher(txt);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String propertyVal;
+            try {
+                propertyVal = BeanUtils.getProperty(response, matcher.group(1));
+            } catch (Exception e) {
+                propertyVal = matcher.group(0);
+            }
+            matcher.appendReplacement(sb, propertyVal);
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
 
