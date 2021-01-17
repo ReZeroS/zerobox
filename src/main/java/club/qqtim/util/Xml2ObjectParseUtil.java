@@ -28,7 +28,7 @@ public final class Xml2ObjectParseUtil {
         D result = null;
         try {
             result = populateObject(element, clazz);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException ignored) {
 
         }
         return result;
