@@ -1,7 +1,11 @@
 package club.qqtim.util;
 
+import club.qqtim.util.item.IntervalTime;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
@@ -81,7 +85,28 @@ public final class DateUtil {
             if (overlapTime(from1, to1, from2, to2)) {
                 action.accept(entity);
             }
-        };
+        }
+    }
+
+
+    /**
+     * merged time
+     * 合并时间区域
+     */
+    public static List<IntervalTime> mergeIntervalTime(List<IntervalTime> intervals) {
+        intervals.sort(Comparator.comparing(IntervalTime::getStartDateTime));
+        LinkedList<IntervalTime> merged = new LinkedList<>();
+        for (IntervalTime interval : intervals){
+            if (merged.isEmpty() || (merged.getLast().getEndDateTime().isBefore(interval.getStartDateTime()))) {
+                merged.add(interval);
+            } else {
+                merged.getLast().setEndDateTime(
+                        merged.getLast().getEndDateTime().compareTo(interval.getEndDateTime()) < 0
+                                ? interval.getEndDateTime() : merged.getLast().getEndDateTime()
+                );
+            }
+        }
+        return merged;
     }
 
 
