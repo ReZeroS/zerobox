@@ -125,12 +125,4 @@
 
 
 
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>Zero Box</name>
-            <url>https://maven.pkg.github.com/ReZeroS/maven-repository/</url>
-        </repository>
-    </distributionManagement>
-
 </project>
