@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  env:
+    build: .
+    container_name: clion-gdb
+    ports:
+      - "45678:22"
+      - "8730:873"
+    cap_add:
+      - ALL
