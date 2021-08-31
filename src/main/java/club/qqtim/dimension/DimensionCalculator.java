@@ -49,7 +49,7 @@ public class DimensionCalculator {
      */
     private void doAllocInputUnits(List<InputUnit> inputUnits, List<VersionRule> versionRules, VersionRule defaultRule)  {
         Map<String, Map<String, Long>> dimensionValBitMap = buildDimensionValMap(inputUnits, versionRules);
-        versionRuleCalc(inputUnits, versionRules, defaultRule, dimensionValBitMap);
+        versionRuleCalc(inputUnits, versionRules, dimensionValBitMap);
         // 应用匹配规则进行试算
     }
 
@@ -80,7 +80,7 @@ public class DimensionCalculator {
             // 右表达式求值
             final List<String> rightExpressionValList = versionRules.stream().map(VersionRule::getRuleGroupLimits)
                     .flatMap(List::stream).filter(e -> dimensionKey.equals(e.getLeftExpression()))
-                    .map(GroupRuleContentDTO::getRightExpression).flatMap(List::stream).distinct().collect(Collectors.toList());
+                    .map(GroupRuleContent::getRightExpression).flatMap(List::stream).distinct().collect(Collectors.toList());
             // 用 set 再去次重
             Set<String> allValues = new HashSet<>();
             allValues.addAll(leftExpressionValList);
@@ -103,17 +103,17 @@ public class DimensionCalculator {
     }
 
     private void versionRuleCalc(List<InputUnit> inputUnits, List<VersionRule> versionRules,
-                                 VersionRule defaultRule, Map<String, Map<String, Long>> dimensionValBitMap) {
+                                 Map<String, Map<String, Long>> dimensionValBitMap) {
         for (VersionRule versionRule : versionRules) {
 
             List<InputUnit> currentRuleUnits = new ArrayList<>();
 
-            final List<GroupRuleContentDTO> groupRuleContentObject = versionRule.getRuleGroupLimits();
+            final List<GroupRuleContent> groupRuleContentObject = versionRule.getRuleGroupLimits();
 
             for (InputUnit inputUnit : inputUnits) {
 
                 boolean match = true;
-                for (GroupRuleContentDTO ruleContent : groupRuleContentObject) {
+                for (GroupRuleContent ruleContent : groupRuleContentObject) {
                     final String leftExpression = ruleContent.getLeftExpression();
 
                     final Map<String, Long> currentDimensionValBitMap = dimensionValBitMap.get(leftExpression);
