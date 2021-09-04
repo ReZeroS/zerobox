@@ -1,9 +1,8 @@
 package club.qqtim.dimension;
 
-import club.qqtim.context.ThreadPoolHelper;
 import club.qqtim.util.StringUtils;
-import concurrent.Callable;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -31,8 +30,7 @@ import java.util.stream.Stream;
 @Data
 @Slf4j
 @RequiredArgsConstructor
-public class DimensionCalculator <IU, OU extends Object & Comparable<? super OU>>
-        implements Runnable {
+public class DimensionCalculator <IU, OU extends Comparable<OU>>{
 
 
     /**
@@ -98,16 +96,54 @@ public class DimensionCalculator <IU, OU extends Object & Comparable<? super OU>
     }
 
 
+    /**
+     * 运算表达式
+     */
+    @Getter
+    private enum OperatorType  {
 
+        /**
+         * 暂时不允许出现这种运算符，出现代表表达式有问题，仅用来免除空指针报黄警告
+         */
+        UNDEFINED(0, "UNDEFINED", "未定义", (a, b) -> true),
 
-    @Override
-    public void run() {
-        try {
-            calc();
-        } catch (Exception e) {
-            log.error(e.toString());
+        /**
+         * a 包含于 b， 即 a 是 b 的子集
+         */
+        INCLUDE(1, "10001", "包含于", (a, b) ->  (a & b) == a),
+
+        /**
+         * a 完全不包含于 b， 即 a b 交集为空
+         */
+        NOT_INCLUDE(2, "10002", "不包含于", (a, b) ->  (a & b) == 0);
+
+        private final Integer id;
+        /** 权限限制类型代码 */
+        private final String code;
+        /** 限制类型描述类型名称*/
+        private final String name;
+        /** 运算表达式 **/
+        private final BiPredicate<Long, Long> expected;
+
+        OperatorType(Integer id, String code, String name, BiPredicate<Long, Long> expected) {
+            this.id = id;
+            this.code = code;
+            this.name = name;
+            this.expected = expected;
         }
+
+        public static OperatorType parse(String code){
+            for (OperatorType operatorType : OperatorType.values()) {
+                if (operatorType.getCode().equals(code)) {
+                    return operatorType;
+                }
+            }
+            return UNDEFINED;
+        }
+
     }
+
+
 
 
     public Map<Long, List<IU>> calc() throws Exception {
@@ -194,7 +230,8 @@ public class DimensionCalculator <IU, OU extends Object & Comparable<? super OU>
 
 
                     // 支持的运算有两种，包含于 即输入单元该维度值 & 运算后 等于原先的左维度维值 不包含与 则 & 运算后 等于 0
-                    final BiPredicate<Long, Long> currentOperator = OperatorType.parse(ruleContent.getOperateExpression()).getExpected();
+                    final BiPredicate<Long, Long> currentOperator =
+                            OperatorType.parse(ruleContent.getOperateExpression()).getExpected();
 
                     if (!currentOperator.test(leftDimensionValBit, rightDimensionValBit)) {
                         match = false;
@@ -245,11 +282,9 @@ public class DimensionCalculator <IU, OU extends Object & Comparable<? super OU>
                 inputUnits, ruleGroups, functionMap, v -> v.values().forEach(vv -> log.info(vv.toString()))
         );
 
-        ThreadPoolHelper.threadPoolExecutor.execute(calculator);
+        calculator.calc();
 
     }
-
-
 
 
 }
