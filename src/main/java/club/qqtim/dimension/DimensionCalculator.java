@@ -86,7 +86,16 @@ public class DimensionCalculator <IU>{
         /**
          * a 完全不包含于 b， 即 a b 交集为空
          */
-        NOT_INCLUDE(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0);
+        NOT_INCLUDE(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0),
+        /**
+         * a 被包含于 b， 即 b 是 a的子集 可用于 树,路径 比如 a = "DeptA/DeptB/DeptC", b = "DeptA/DeptB", a 是 b的子部门
+         */
+        BE_INCLUDED(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == b),
+        /**
+         * a  b 有交集
+         * 即 a 中只要有一个状态 在 b 中存在即可， 多用于 a为 状态集合时
+         */
+        RETAIN(3, "RETAIN", "交集", (a, b) ->  (a & b) > 0);
 
         private final Integer id;
         /** 权限限制类型代码 */
@@ -113,7 +122,6 @@ public class DimensionCalculator <IU>{
         }
 
     }
-
 
 
 
@@ -163,7 +171,7 @@ public class DimensionCalculator <IU>{
             }
 
             // key 维度值  val 维度值对应的位图
-            Map<Object, Long> valBitMap = new HashMap<>(16);
+            Map<Object, Long> valBitMap = new HashMap<>(allValues.size());
             for (int i = 0; i < allValues.size(); i++) {
                 valBitMap.put(allValues.get(i), 1L << i);
             }
@@ -173,7 +181,7 @@ public class DimensionCalculator <IU>{
         return dimensionValBitMap;
     }
 
-    private Map<Long, List<IU>> versionRuleCalc(Map<String, Map<Object, Long>> dimensionValBitMap) {
+    private void versionRuleCalc(Map<String, Map<Object, Long>> dimensionValBitMap) {
         // 按优先级排序
         ruleGroupList.sort(Comparator.comparing(RuleGroup::getPriority));
 
@@ -194,10 +202,14 @@ public class DimensionCalculator <IU>{
                     final Map<Object, Long> currentDimensionValBitMap = dimensionValBitMap.get(leftExpression);
 
                     final Object leftDimensionVal = expressionFuncMap.get(leftExpression).apply(inputUnit);
-                    Long leftDimensionValBit = currentDimensionValBitMap.get(leftDimensionVal);
+                    Long leftDimensionValBit = leftDimensionVal instanceof Collection
+                            ? ((Collection<?>) leftDimensionVal).stream()
+                                    .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b)
+                            : currentDimensionValBitMap.get(leftDimensionVal);
 
 
-                    // 同样的右边的表达式也对应一个数(由右边的所有选中的值或运算得来）todo: 如果可选全部，那么全为1
+                    // todo: 如果可选全部，那么全为1
+                    // 同样的右边的表达式也对应一个数(由右边的所有选中的值或运算得来）
                     final Long rightDimensionValBit = ruleContent.getRightExpression().stream()
                             .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b);
 
@@ -218,7 +230,6 @@ public class DimensionCalculator <IU>{
             // A 组搞完了，接着整 B 组
             // 如果当前组分群时找到的剩余单元为空，就不进行试算了
             if (CollectionUtils.isNotEmpty(currentRuleUnits)) {
-                 //  todo 添加使用逻辑
                 ruleAllocInputUnit.put(ruleGroup.getId(), currentRuleUnits);
                 // 移除该组使用的，剩下的继续循环计算
                 inputUnits.removeAll(currentRuleUnits);
@@ -227,24 +238,21 @@ public class DimensionCalculator <IU>{
 
         // 剩下的单元都进入 默认组
         if (CollectionUtils.isNotEmpty(inputUnits)) {
-            //  todo 添加使用逻辑
             ruleAllocInputUnit.put(0L, inputUnits);
-            // 移除该组使用的，剩下的继续循环计算
         }
         // 增强支持消费
         consumer.accept(ruleAllocInputUnit);
-        return ruleAllocInputUnit;
     }
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         // 输入单元
         List<InputUnit> inputUnits = new ArrayList<>();
-        inputUnits.add(new InputUnit(1L, "Li", "001"));
-        inputUnits.add(new InputUnit(2L, "Chu", "002"));
-        inputUnits.add(new InputUnit(3L, "Yun", "003"));
-        inputUnits.add(new InputUnit(4L, "Fei", "003"));
-        inputUnits.add(new InputUnit(5L, "Long", "004"));
+        inputUnits.add(new InputUnit(1L, "Li", Arrays.asList("001", "002")));
+        inputUnits.add(new InputUnit(2L, "Chu", Arrays.asList("002", "003")));
+        inputUnits.add(new InputUnit(3L, "Yun", Arrays.asList("002")));
+        inputUnits.add(new InputUnit(4L, "Fei", Arrays.asList("003", "002")));
+        inputUnits.add(new InputUnit(5L, "Long", Arrays.asList("001", "002")));
 
         // 计算规则组
         List<RuleGroup> ruleGroups = new ArrayList<>();
@@ -252,7 +260,7 @@ public class DimensionCalculator <IU>{
         firstRuleGroup.setId(1L);
         firstRuleGroup.setPriority(10);
         // 计算规则明细
-        // 第一组 Id 不包含 2，3  名称包含 Li, haha
+        // 第一组 Id 不包含 2，3  名称包含 Li, haha, 武器需要至少有一个 003 或者 004
         {
             final Rule<Long> idNotIncludeRule = new Rule<>();
             idNotIncludeRule.setLeftExpression("ID");
@@ -262,11 +270,15 @@ public class DimensionCalculator <IU>{
             nameIncludeRule.setLeftExpression("NAME");
             nameIncludeRule.setOperateExpression(OperatorType.INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
-            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
+            final Rule<String> weaponNotIncludeRule = new Rule<>();
+            weaponNotIncludeRule.setLeftExpression("WEAPON");
+            weaponNotIncludeRule.setOperateExpression(OperatorType.RETAIN.getCode());
+            weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
+            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule, weaponNotIncludeRule));
             ruleGroups.add(firstRuleGroup);
         }
 
-
+        // 第二组 id 包含于 2，3 名称 不包含于 Fei haha
         {
             final RuleGroup secondRuleGroup = new RuleGroup();
             secondRuleGroup.setId(2L);
@@ -286,13 +298,10 @@ public class DimensionCalculator <IU>{
 
 
         // 取维度值函数
-        Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(2);
+        Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(4);
         functionMap.put("ID", InputUnit::getId);
         functionMap.put("NAME", InputUnit::getName);
-//        functionMap.put("20003", inputUnit -> {
-//            log.info("implement method");
-//            return StringUtils.isNotEmpty(inputUnit.getName()) ? "1": "0";
-//        });
+        functionMap.put("WEAPON", InputUnit::getWeaponList);
 
         DimensionCalculator<InputUnit> calculator = new DimensionCalculator<>(
                 inputUnits, ruleGroups, functionMap,
