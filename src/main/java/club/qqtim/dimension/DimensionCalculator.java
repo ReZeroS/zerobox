@@ -1,14 +1,15 @@
 package club.qqtim.dimension;
 
-import club.qqtim.util.StringUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
 @Data
 @Slf4j
 @RequiredArgsConstructor
-public class DimensionCalculator <IU, OU extends Comparable<OU>>{
+public class DimensionCalculator <IU>{
 
 
     /**
@@ -53,7 +54,7 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
     /**
      * 计算单元获取维值的方案
      */
-    private final Map<String, Function<IU, OU>> LEFT_EXPRESSION_FUNC_MAP;
+    private final Map<String, Function<IU, Object>> expressionFuncMap;
 
 
     /**
@@ -63,37 +64,7 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
 
 
 
-    @Data
-    class RuleGroup {
-        /**
-         * 匹配成功后落到的组
-         */
-        private Long id;
-        /**
-         * 改组的优先级，决定是否优先匹配
-         */
-        private Integer priority;
-        /**
-         * 规则组
-         */
-        private List<Rule> bindRuleList;
 
-
-    }
-
-    @Data
-    class Rule {
-
-        // 左表达式
-        private String leftExpression;
-
-        // 运算表达式
-        private String operateExpression;
-
-        // 右表达式所取值集
-        private List<OU> rightExpression;
-
-    }
 
 
     /**
@@ -110,12 +81,12 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
         /**
          * a 包含于 b， 即 a 是 b 的子集
          */
-        INCLUDE(1, "10001", "包含于", (a, b) ->  (a & b) == a),
+        INCLUDE(1, "INCLUDE", "包含于", (a, b) ->  (a & b) == a),
 
         /**
          * a 完全不包含于 b， 即 a b 交集为空
          */
-        NOT_INCLUDE(2, "10002", "不包含于", (a, b) ->  (a & b) == 0);
+        NOT_INCLUDE(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0);
 
         private final Integer id;
         /** 权限限制类型代码 */
@@ -146,11 +117,11 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
 
 
 
-    public Map<Long, List<IU>> calc() throws Exception {
+    public void calc() {
         // 建立位图映射
-        Map<String, Map<OU, Long>> dimensionValBitMap = buildDimensionValMap(inputUnits, ruleGroupList);
+        Map<String, Map<Object, Long>> dimensionValBitMap = buildDimensionValMap();
         // 应用匹配规则进行试算
-        return versionRuleCalc(inputUnits, ruleGroupList, dimensionValBitMap);
+        versionRuleCalc(dimensionValBitMap);
     }
 
 
@@ -162,21 +133,24 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
      * key 是维度（编码） 1001    key 维度值    val 维度值对应的 bitmap
      * key dimension, val <key: dimensionVal, val: dimensionValBit>
      */
-    private Map<String, Map<OU, Long>>  buildDimensionValMap(List<IU> inputUnits, List<RuleGroup> ruleGroups) {
+    private Map<String, Map<Object, Long>>  buildDimensionValMap() {
         // 将这些值的下标作为位图下标映射成一个64位数
         // key dimension, val <key: dimensionVal, val: dimensionValBit>
-        Map<String, Map<OU, Long>> dimensionValBitMap = new HashMap<>(2);
+        Map<String, Map<Object, Long>> dimensionValBitMap = new HashMap<>(2);
 
         // 按所有已知维度遍历
-        for (Map.Entry<String, Function<IU, OU>> leftExpressionFuncEntry : LEFT_EXPRESSION_FUNC_MAP.entrySet()) {
+        for (Map.Entry<String, Function<IU, Object>> leftExpressionFuncEntry : expressionFuncMap.entrySet()) {
             final String dimensionKey = leftExpressionFuncEntry.getKey();
-            final Function<IU, OU> leftExpressionFunc = leftExpressionFuncEntry.getValue();
+            final Function<IU, Object> leftExpressionFunc = leftExpressionFuncEntry.getValue();
 
-            final List<OU> allValues = Stream.of(
+            final List<Object> allValues = Stream.of(
                             // 左表达式求值
-                            inputUnits.stream().map(leftExpressionFunc),
+                            inputUnits.stream().map(leftExpressionFunc).map(e ->
+                                    // 返回值可能一个也可能多个
+                                e instanceof Collection ? new ArrayList<>((Collection<?>) e) : Collections.singletonList(e)
+                            ).flatMap(List::stream),
                             // 右表达式求值
-                            ruleGroups.stream().map(RuleGroup::getBindRuleList)
+                            ruleGroupList.stream().map(RuleGroup::getBindRuleList)
                                     // 找到所有组中所有条件为该左维度的
                                     .flatMap(List::stream).filter(e -> dimensionKey.equals(e.getLeftExpression()))
                                     // 取出对应的右维度值
@@ -189,7 +163,7 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
             }
 
             // key 维度值  val 维度值对应的位图
-            Map<OU, Long> valBitMap = new HashMap<>(16);
+            Map<Object, Long> valBitMap = new HashMap<>(16);
             for (int i = 0; i < allValues.size(); i++) {
                 valBitMap.put(allValues.get(i), 1L << i);
             }
@@ -199,28 +173,27 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
         return dimensionValBitMap;
     }
 
-    private Map<Long, List<IU>> versionRuleCalc(List<IU> inputUnits, List<RuleGroup> ruleGroups,
-                                                Map<String, Map<OU, Long>> dimensionValBitMap) {
+    private Map<Long, List<IU>> versionRuleCalc(Map<String, Map<Object, Long>> dimensionValBitMap) {
         // 按优先级排序
-        ruleGroups.sort(Comparator.comparing(RuleGroup::getPriority));
+        ruleGroupList.sort(Comparator.comparing(RuleGroup::getPriority));
 
         Map<Long, List<IU>> ruleAllocInputUnit = new HashMap<>(16);
 
-        for (RuleGroup ruleGroup : ruleGroups) {
+        for (RuleGroup ruleGroup : ruleGroupList) {
 
             List<IU> currentRuleUnits = new ArrayList<>();
 
-            final List<Rule> ruleObject = ruleGroup.getBindRuleList();
+            final List<Rule<?>> ruleObject = ruleGroup.getBindRuleList();
 
             for (IU inputUnit : inputUnits) {
 
                 boolean match = true;
-                for (Rule ruleContent : ruleObject) {
+                for (Rule<?> ruleContent : ruleObject) {
                     final String leftExpression = ruleContent.getLeftExpression();
 
-                    final Map<OU, Long> currentDimensionValBitMap = dimensionValBitMap.get(leftExpression);
+                    final Map<Object, Long> currentDimensionValBitMap = dimensionValBitMap.get(leftExpression);
 
-                    final OU leftDimensionVal = LEFT_EXPRESSION_FUNC_MAP.get(leftExpression).apply(inputUnit);
+                    final Object leftDimensionVal = expressionFuncMap.get(leftExpression).apply(inputUnit);
                     Long leftDimensionValBit = currentDimensionValBitMap.get(leftDimensionVal);
 
 
@@ -264,22 +237,67 @@ public class DimensionCalculator <IU, OU extends Comparable<OU>>{
     }
 
 
-
-
-
-    @Test
-    public void testComputeSet() throws Exception {
+    public static void main(String[] args) throws Exception {
+        // 输入单元
         List<InputUnit> inputUnits = new ArrayList<>();
-        List<DimensionCalculator<InputUnit, String>.RuleGroup> ruleGroups = new ArrayList<>();
-        Map<String, Function<InputUnit, String>> functionMap = new HashMap<>(2);
-        functionMap.put("20002", InputUnit::getName);
-        functionMap.put("20003", inputUnit -> {
-            log.info("implement method");
-            return StringUtils.isNotEmpty(inputUnit.getName()) ? "1": "0";
-        });
+        inputUnits.add(new InputUnit(1L, "Li", "001"));
+        inputUnits.add(new InputUnit(2L, "Chu", "002"));
+        inputUnits.add(new InputUnit(3L, "Yun", "003"));
+        inputUnits.add(new InputUnit(4L, "Fei", "003"));
+        inputUnits.add(new InputUnit(5L, "Long", "004"));
 
-        DimensionCalculator<InputUnit, String> calculator = new DimensionCalculator<InputUnit, String>(
-                inputUnits, ruleGroups, functionMap, v -> v.values().forEach(vv -> log.info(vv.toString()))
+        // 计算规则组
+        List<RuleGroup> ruleGroups = new ArrayList<>();
+        final RuleGroup firstRuleGroup = new RuleGroup();
+        firstRuleGroup.setId(1L);
+        firstRuleGroup.setPriority(10);
+        // 计算规则明细
+        // 第一组 Id 不包含 2，3  名称包含 Li, haha
+        {
+            final Rule<Long> idNotIncludeRule = new Rule<>();
+            idNotIncludeRule.setLeftExpression("ID");
+            idNotIncludeRule.setOperateExpression(OperatorType.NOT_INCLUDE.getCode());
+            idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
+            final Rule<String> nameIncludeRule = new Rule<>();
+            nameIncludeRule.setLeftExpression("NAME");
+            nameIncludeRule.setOperateExpression(OperatorType.INCLUDE.getCode());
+            nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
+            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
+            ruleGroups.add(firstRuleGroup);
+        }
+
+
+        {
+            final RuleGroup secondRuleGroup = new RuleGroup();
+            secondRuleGroup.setId(2L);
+            secondRuleGroup.setPriority(11);
+            // 计算规则明细
+            final Rule<Long> idNotIncludeRule = new Rule<>();
+            idNotIncludeRule.setLeftExpression("ID");
+            idNotIncludeRule.setOperateExpression(OperatorType.INCLUDE.getCode());
+            idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
+            final Rule<String> nameIncludeRule = new Rule<>();
+            nameIncludeRule.setLeftExpression("NAME");
+            nameIncludeRule.setOperateExpression(OperatorType.NOT_INCLUDE.getCode());
+            nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
+            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
+            ruleGroups.add(secondRuleGroup);
+        }
+
+
+        // 取维度值函数
+        Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(2);
+        functionMap.put("ID", InputUnit::getId);
+        functionMap.put("NAME", InputUnit::getName);
+//        functionMap.put("20003", inputUnit -> {
+//            log.info("implement method");
+//            return StringUtils.isNotEmpty(inputUnit.getName()) ? "1": "0";
+//        });
+
+        DimensionCalculator<InputUnit> calculator = new DimensionCalculator<>(
+                inputUnits, ruleGroups, functionMap,
+
+                map -> map.forEach((key, value) -> log.info("k {} v{} ", key, value))
         );
 
         calculator.calc();
