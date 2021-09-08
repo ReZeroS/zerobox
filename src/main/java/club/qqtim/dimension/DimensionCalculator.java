@@ -271,11 +271,11 @@ public class DimensionCalculator <IU>{
     public static void main(String[] args) {
         // 输入单元
         List<InputUnit> inputUnits = new ArrayList<>();
-        inputUnits.add(new InputUnit(1L, "Li", Arrays.asList("001", "002")));
-        inputUnits.add(new InputUnit(2L, "Chu", Arrays.asList("002", "003")));
-        inputUnits.add(new InputUnit(3L, "Yun", Arrays.asList("002")));
-        inputUnits.add(new InputUnit(4L, "Fei", Arrays.asList("003", "002")));
-        inputUnits.add(new InputUnit(5L, "Long", Arrays.asList("001", "002")));
+        inputUnits.add(new InputUnit(1L, "Li", 8, Arrays.asList("001", "002")));
+        inputUnits.add(new InputUnit(2L, "Chu", 10, Arrays.asList("002", "003")));
+        inputUnits.add(new InputUnit(3L, "Yun", 11, Arrays.asList("002")));
+        inputUnits.add(new InputUnit(4L, "Fei", 12, Arrays.asList("003", "002")));
+        inputUnits.add(new InputUnit(5L, "Long", 13, Arrays.asList("001", "002")));
 
         // 计算规则组
         List<RuleGroup> ruleGroups = new ArrayList<>();
@@ -316,6 +316,11 @@ public class DimensionCalculator <IU>{
             nameIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
             secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
+            final Rule<Integer> ageGtRule = new Rule<>();
+            ageGtRule.setLeftExpression("AGE");
+            ageGtRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
+            ageGtRule.setRightExpression(Arrays.asList(10));
+            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule, ageGtRule));
             ruleGroups.add(secondRuleGroup);
         }
 
@@ -324,6 +329,7 @@ public class DimensionCalculator <IU>{
         Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(4);
         functionMap.put("ID", InputUnit::getId);
         functionMap.put("NAME", InputUnit::getName);
+        functionMap.put("AGE", InputUnit::getAge);
         functionMap.put("WEAPON", InputUnit::getWeaponList);
 
         DimensionCalculator<InputUnit> calculator = new DimensionCalculator<>(
