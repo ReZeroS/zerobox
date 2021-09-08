@@ -2,6 +2,7 @@ package club.qqtim.dimension;
 
 import lombok.Data;
 
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -14,6 +15,6 @@ class Rule<OUT extends Comparable<OUT>> {
     private String operateExpression;
 
     // 右表达式所取值集
-    private List<OUT> rightExpression;
+    private Collection<OUT> rightExpression;
 
 }
