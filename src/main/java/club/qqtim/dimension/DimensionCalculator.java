@@ -23,8 +23,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * 异步执行试算
- *
+ * 缺陷：
+ *  无法解决状态数量过多的问题，即一个维度最多只有63个维值
+ *  状态必须规范化才能对比，即可选的被对比维值b需要包括所有的对比维值a
  * 使用方式
  *  1. LEFT_EXPRESSION_FUNC_MAP 中初始化对应的维度接口
  *  2. 字典表rule-dict中右维度添加对应的维值
@@ -78,6 +79,8 @@ public class DimensionCalculator <IU>{
 
     /**
      * 运算表达式
+     * a 对比维值
+     * b 被对比维值
      */
     @Getter
     @AllArgsConstructor
