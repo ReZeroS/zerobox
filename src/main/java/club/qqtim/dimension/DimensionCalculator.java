@@ -1,5 +1,6 @@
 package club.qqtim.dimension;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -35,12 +37,6 @@ public class DimensionCalculator <IU>{
 
 
     /**
-     * 考虑趋同，尽量都取正数，符号位不要了
-     * 限制每个维度值范围只能63位，即最多有63个值
-     */
-    private static final int DIMENSION_LIMIT = 63;
-
-    /**
      * 输入单元 输入最小单元，每个最小单元包含该单元的不同属性
      */
     private final List<IU> inputUnits;
@@ -52,6 +48,19 @@ public class DimensionCalculator <IU>{
 
 
     /**
+     * 默认组ID 0, 经过所有组后仍未能满足条件的进入此组
+     */
+    private static final short DEFAULT_GROUP = 0;
+
+
+    /**
+     * 考虑趋同，尽量都取正数，符号位不要了
+     * 限制每个维度值范围只能63位，即最多有63个值
+     */
+    private static final short DIMENSION_LIMIT = 63;
+
+
+    /**
      * 计算单元获取维值的方案
      */
     private final Map<String, Function<IU, Object>> expressionFuncMap;
@@ -60,7 +69,7 @@ public class DimensionCalculator <IU>{
     /**
      * 消费支持
      */
-    private final Consumer<Map<Long, List<IU>>> consumer;
+    private final Consumer<Map<Long, List<IU>>> consumerSupport;
 
 
 
@@ -71,33 +80,54 @@ public class DimensionCalculator <IU>{
      * 运算表达式
      */
     @Getter
+    @AllArgsConstructor
     private enum OperatorType  {
 
         /**
          * 暂时不允许出现这种运算符，出现代表表达式有问题，仅用来免除空指针报黄警告
          */
-        UNDEFINED(0, "UNDEFINED", "未定义", (a, b) -> true),
+        UNDEFINED("UNDEFINED", "未定义", (a, b) -> false),
 
         /**
          * a 包含于 b， 即 a 是 b 的子集
          */
-        INCLUDE(1, "INCLUDE", "包含于", (a, b) ->  (a & b) == a),
+        INCLUDE("INCLUDE", "包含于", (a, b) ->  (a & b) == a),
 
         /**
          * a 完全不包含于 b， 即 a b 交集为空
          */
-        NOT_INCLUDE(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0),
+        NOT_INCLUDE("NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0),
+
         /**
          * a 被包含于 b， 即 b 是 a的子集 可用于 树,路径 比如 a = "DeptA/DeptB/DeptC", b = "DeptA/DeptB", a 是 b的子部门
          */
-        BE_INCLUDED(2, "NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == b),
+        BE_INCLUDED("NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == b),
+
         /**
          * a  b 有交集
          * 即 a 中只要有一个状态 在 b 中存在即可， 多用于 a为 状态集合时
          */
-        RETAIN(3, "RETAIN", "交集", (a, b) ->  (a & b) > 0);
+        RETAIN("RETAIN", "交集", (a, b) ->  (a & b) > 0),
 
-        private final Integer id;
+        // 值运算部分，要求维值实现comparable
+        /**
+         * a > b
+         */
+        GT("GT", "大于", (a, b) ->  a > b),
+        GE("GE", "大于等于", (a, b) ->  a >= b),
+        LT("LT", "小于", (a, b) ->  a < b),
+        LE("LE", "小于等于", (a, b) ->  a <= b),
+        /**
+         * a == b
+         */
+        EQ("EQ", "等于", Objects::equals),
+        /**
+         * a != b
+         */
+        NE("NE", "不等于", (a, b) -> !Objects.equals(a, b))
+        ;
+
+
         /** 权限限制类型代码 */
         private final String code;
         /** 限制类型描述类型名称*/
@@ -105,12 +135,6 @@ public class DimensionCalculator <IU>{
         /** 运算表达式 **/
         private final BiPredicate<Long, Long> expected;
 
-        OperatorType(Integer id, String code, String name, BiPredicate<Long, Long> expected) {
-            this.id = id;
-            this.code = code;
-            this.name = name;
-            this.expected = expected;
-        }
 
         public static OperatorType parse(String code){
             for (OperatorType operatorType : OperatorType.values()) {
@@ -148,6 +172,7 @@ public class DimensionCalculator <IU>{
 
         // 按所有已知维度遍历
         for (Map.Entry<String, Function<IU, Object>> leftExpressionFuncEntry : expressionFuncMap.entrySet()) {
+            // 获取维度
             final String dimensionKey = leftExpressionFuncEntry.getKey();
             final Function<IU, Object> leftExpressionFunc = leftExpressionFuncEntry.getValue();
 
@@ -155,14 +180,14 @@ public class DimensionCalculator <IU>{
                             // 左表达式求值
                             inputUnits.stream().map(leftExpressionFunc).map(e ->
                                     // 返回值可能一个也可能多个
-                                e instanceof Collection ? new ArrayList<>((Collection<?>) e) : Collections.singletonList(e)
-                            ).flatMap(List::stream),
+                                e instanceof Collection ? (Collection<?>) e : Collections.singleton(e)
+                            ).flatMap(Collection::stream),
                             // 右表达式求值
                             ruleGroupList.stream().map(RuleGroup::getBindRuleList)
                                     // 找到所有组中所有条件为该左维度的
                                     .flatMap(List::stream).filter(e -> dimensionKey.equals(e.getLeftExpression()))
                                     // 取出对应的右维度值
-                                    .map(Rule::getRightExpression).flatMap(List::stream))
+                                    .map(Rule::getRightExpression).flatMap(Collection::stream))
                     .flatMap(Function.identity()).distinct() // 去重：左右的存在的维度值均可能出现自身重复或者交叉重复
                     .sorted().collect(Collectors.toList()); // 排序 为了满足值比较
 
@@ -194,21 +219,19 @@ public class DimensionCalculator <IU>{
             final List<Rule<?>> ruleObject = ruleGroup.getBindRuleList();
 
             for (IU inputUnit : inputUnits) {
-
+                // 条件与条件间满足且的关系，用一个boolean
                 boolean match = true;
                 for (Rule<?> ruleContent : ruleObject) {
                     final String leftExpression = ruleContent.getLeftExpression();
-
+                    // 取出当前维度对应的所有值的bitmap
                     final Map<Object, Long> currentDimensionValBitMap = dimensionValBitMap.get(leftExpression);
-
+                    // 计算输入单元当前维度的对应bitmap
                     final Object leftDimensionVal = expressionFuncMap.get(leftExpression).apply(inputUnit);
                     Long leftDimensionValBit = leftDimensionVal instanceof Collection
                             ? ((Collection<?>) leftDimensionVal).stream()
                                     .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b)
                             : currentDimensionValBitMap.get(leftDimensionVal);
 
-
-                    // todo: 如果可选全部，那么全为1
                     // 同样的右边的表达式也对应一个数(由右边的所有选中的值或运算得来）
                     final Long rightDimensionValBit = ruleContent.getRightExpression().stream()
                             .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b);
@@ -241,7 +264,7 @@ public class DimensionCalculator <IU>{
             ruleAllocInputUnit.put(0L, inputUnits);
         }
         // 增强支持消费
-        consumer.accept(ruleAllocInputUnit);
+        consumerSupport.accept(ruleAllocInputUnit);
     }
 
 
