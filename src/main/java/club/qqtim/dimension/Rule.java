@@ -3,7 +3,6 @@ package club.qqtim.dimension;
 import lombok.Data;
 
 import java.util.Collection;
-import java.util.List;
 
 @Data
 class Rule<OUT extends Comparable<OUT>> {

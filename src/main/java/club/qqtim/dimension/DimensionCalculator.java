@@ -50,7 +50,7 @@ public class DimensionCalculator <IU>{
     /**
      * 默认组ID 0, 经过所有组后仍未能满足条件的进入此组
      */
-    private static final short DEFAULT_GROUP = 0;
+    private static final long DEFAULT_GROUP = 0;
 
 
     /**
@@ -81,7 +81,7 @@ public class DimensionCalculator <IU>{
      */
     @Getter
     @AllArgsConstructor
-    private enum OperatorType  {
+    private enum Operator {
 
         /**
          * 暂时不允许出现这种运算符，出现代表表达式有问题，仅用来免除空指针报黄警告
@@ -136,10 +136,10 @@ public class DimensionCalculator <IU>{
         private final BiPredicate<Long, Long> expected;
 
 
-        public static OperatorType parse(String code){
-            for (OperatorType operatorType : OperatorType.values()) {
-                if (operatorType.getCode().equals(code)) {
-                    return operatorType;
+        public static Operator parse(String code){
+            for (Operator operator : Operator.values()) {
+                if (operator.getCode().equals(code)) {
+                    return operator;
                 }
             }
             return UNDEFINED;
@@ -239,7 +239,7 @@ public class DimensionCalculator <IU>{
 
                     // 支持的运算有两种，包含于 即输入单元该维度值 & 运算后 等于原先的左维度维值 不包含与 则 & 运算后 等于 0
                     final BiPredicate<Long, Long> currentOperator =
-                            OperatorType.parse(ruleContent.getOperateExpression()).getExpected();
+                            Operator.parse(ruleContent.getOperateExpression()).getExpected();
 
                     if (!currentOperator.test(leftDimensionValBit, rightDimensionValBit)) {
                         match = false;
@@ -261,7 +261,7 @@ public class DimensionCalculator <IU>{
 
         // 剩下的单元都进入 默认组
         if (CollectionUtils.isNotEmpty(inputUnits)) {
-            ruleAllocInputUnit.put(0L, inputUnits);
+            ruleAllocInputUnit.put(DEFAULT_GROUP, inputUnits);
         }
         // 增强支持消费
         consumerSupport.accept(ruleAllocInputUnit);
@@ -287,15 +287,15 @@ public class DimensionCalculator <IU>{
         {
             final Rule<Long> idNotIncludeRule = new Rule<>();
             idNotIncludeRule.setLeftExpression("ID");
-            idNotIncludeRule.setOperateExpression(OperatorType.NOT_INCLUDE.getCode());
+            idNotIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
             final Rule<String> nameIncludeRule = new Rule<>();
             nameIncludeRule.setLeftExpression("NAME");
-            nameIncludeRule.setOperateExpression(OperatorType.INCLUDE.getCode());
+            nameIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
             final Rule<String> weaponNotIncludeRule = new Rule<>();
             weaponNotIncludeRule.setLeftExpression("WEAPON");
-            weaponNotIncludeRule.setOperateExpression(OperatorType.RETAIN.getCode());
+            weaponNotIncludeRule.setOperateExpression(Operator.RETAIN.getCode());
             weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
             firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule, weaponNotIncludeRule));
             ruleGroups.add(firstRuleGroup);
@@ -309,18 +309,18 @@ public class DimensionCalculator <IU>{
             // 计算规则明细
             final Rule<Long> idNotIncludeRule = new Rule<>();
             idNotIncludeRule.setLeftExpression("ID");
-            idNotIncludeRule.setOperateExpression(OperatorType.INCLUDE.getCode());
+            idNotIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
             idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
             final Rule<String> nameIncludeRule = new Rule<>();
             nameIncludeRule.setLeftExpression("NAME");
-            nameIncludeRule.setOperateExpression(OperatorType.NOT_INCLUDE.getCode());
+            nameIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
             secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
             ruleGroups.add(secondRuleGroup);
         }
 
 
-        // 取维度值函数
+        // 注册维度维值函数
         Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(4);
         functionMap.put("ID", InputUnit::getId);
         functionMap.put("NAME", InputUnit::getName);
