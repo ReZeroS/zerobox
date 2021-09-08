@@ -296,7 +296,7 @@ public class DimensionCalculator <IU>{
             nameIncludeRule.setLeftExpression("NAME");
             nameIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
-            final Rule<String> weaponNotIncludeRule = new Rule<>();
+            final Rule<String> weaponNotIncludeRule = new Rule<>(); // 2.
             weaponNotIncludeRule.setLeftExpression("WEAPON");
             weaponNotIncludeRule.setOperateExpression(Operator.RETAIN.getCode());
             weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
@@ -319,7 +319,7 @@ public class DimensionCalculator <IU>{
             nameIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
             secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
-            final Rule<Integer> ageGtRule = new Rule<>();
+            final Rule<Integer> ageGtRule = new Rule<>();   //3.
             ageGtRule.setLeftExpression("AGE");
             ageGtRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             ageGtRule.setRightExpression(Arrays.asList(10));
