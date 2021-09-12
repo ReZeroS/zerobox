@@ -127,7 +127,9 @@ public class DimensionCalculator <IU>{
         /**
          * a != b
          */
-        NE("NE", "不等于", (a, b) -> !Objects.equals(a, b))
+        NE("NE", "不等于", (a, b) -> !Objects.equals(a, b)),
+
+        EXIST("EXIST", "存在", (a, b) -> a > 0),
         ;
 
 
