@@ -24,8 +24,9 @@ import java.util.stream.Stream;
 
 /**
  * 缺陷：
+ *  1.2  1 2 3 =>
  *  无法解决状态数量过多的问题，即一个维度最多只有63个维值
- *  状态必须规范化才能对比，即可选的被对比维值b需要包括所有的对比维值a
+ *  状态必须规范化(无限->有限)才能对比，即可选的被对比维值b需要包括所有的对比维值a
  * 使用方式
  *  1. LEFT_EXPRESSION_FUNC_MAP 中初始化对应的维度接口
  *  2. 字典表rule-dict中右维度添加对应的维值
@@ -93,6 +94,7 @@ public class DimensionCalculator <IU>{
 
         /**
          * a 包含于 b， 即 a 是 b 的子集
+         * 值 对 集
          */
         INCLUDE("INCLUDE", "包含于", (a, b) ->  (a & b) == a),
 
@@ -167,7 +169,7 @@ public class DimensionCalculator <IU>{
 
     /**
      * 根据全部输入单元和规则配置生成所选维度
-     * key 是维度（编码） 1001    key 维度值    val 维度值对应的 bitmap
+     * key 是维度（编码） NAME，AGE    key 维度值    val 维度值对应的 bitmap
      * key dimension, val <key: dimensionVal, val: dimensionValBit>
      */
     private Map<String, Map<Object, Long>>  buildDimensionValMap() {
@@ -176,23 +178,25 @@ public class DimensionCalculator <IU>{
         Map<String, Map<Object, Long>> dimensionValBitMap = new HashMap<>(2);
 
         // 按所有已知维度遍历
+//        expressionFuncMap.entrySet().stream().filter(e -> allLeftExpression.contains(e.getKey()))
+//                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, n) -> n);
         for (Map.Entry<String, Function<IU, Object>> leftExpressionFuncEntry : expressionFuncMap.entrySet()) {
-            // 获取维度
+            // 获取维度 NAME AGE
             final String dimensionKey = leftExpressionFuncEntry.getKey();
             final Function<IU, Object> leftExpressionFunc = leftExpressionFuncEntry.getValue();
 
             final List<Object> allValues = Stream.of(
                             // 左表达式求值
-                            inputUnits.stream().map(leftExpressionFunc).map(e ->
+                            inputUnits.stream().map(leftExpressionFunc).map(ou ->
                                     // 返回值可能一个也可能多个
-                                e instanceof Collection ? (Collection<?>) e : Collections.singleton(e)
-                            ).flatMap(Collection::stream),
+                                    ou instanceof Collection ? (Collection<?>) ou : Collections.singleton(ou)
+                            ).flatMap(Collection::stream), // Stream<ou>
                             // 右表达式求值
                             ruleGroupList.stream().map(RuleGroup::getBindRuleList)
                                     // 找到所有组中所有条件为该左维度的
                                     .flatMap(List::stream).filter(e -> dimensionKey.equals(e.getLeftExpression()))
                                     // 取出对应的右维度值
-                                    .map(Rule::getRightExpression).flatMap(Collection::stream))
+                                    .map(Rule::getRightExpression).flatMap(Collection::stream)) // Stream<ou>
                     .flatMap(Function.identity()).distinct() // 去重：左右的存在的维度值均可能出现自身重复或者交叉重复
                     .sorted().collect(Collectors.toList()); // 排序 为了满足值比较
 
@@ -203,7 +207,7 @@ public class DimensionCalculator <IU>{
             // key 维度值  val 维度值对应的位图
             Map<Object, Long> valBitMap = new HashMap<>(allValues.size());
             for (int i = 0; i < allValues.size(); i++) {
-                valBitMap.put(allValues.get(i), 1L << i);
+                valBitMap.put(allValues.get(i), 1L << i); // 001 010 100
             }
             // 映射该维度对应所有维度值位图记录
             dimensionValBitMap.put(dimensionKey, valBitMap);
@@ -284,12 +288,12 @@ public class DimensionCalculator <IU>{
 
         // 计算规则组
         List<RuleGroup> ruleGroups = new ArrayList<>();
-        final RuleGroup firstRuleGroup = new RuleGroup();
-        firstRuleGroup.setId(1L);
-        firstRuleGroup.setPriority(10);
         // 计算规则明细
         // 第一组 Id 不包含 2，3  名称包含 Li, haha, 武器需要至少有一个 003 或者 004
         {
+            final RuleGroup firstRuleGroup = new RuleGroup();
+            firstRuleGroup.setId(1L);
+            firstRuleGroup.setPriority(10);
             final Rule<Long> idNotIncludeRule = new Rule<>();
             idNotIncludeRule.setLeftExpression("ID");
             idNotIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
@@ -302,7 +306,9 @@ public class DimensionCalculator <IU>{
             weaponNotIncludeRule.setLeftExpression("WEAPON");
             weaponNotIncludeRule.setOperateExpression(Operator.RETAIN.getCode());
             weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
-            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule, weaponNotIncludeRule));
+            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule
+                    , weaponNotIncludeRule
+            ));
             ruleGroups.add(firstRuleGroup);
         }
 
@@ -323,9 +329,11 @@ public class DimensionCalculator <IU>{
             secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
             final Rule<Integer> ageGtRule = new Rule<>();   //3.
             ageGtRule.setLeftExpression("AGE");
-            ageGtRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
+            ageGtRule.setOperateExpression(Operator.GT.getCode());
             ageGtRule.setRightExpression(Arrays.asList(10));
-            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule, ageGtRule));
+            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule
+                    , ageGtRule
+            ));
             ruleGroups.add(secondRuleGroup);
         }
 

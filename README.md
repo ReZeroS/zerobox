@@ -7,7 +7,11 @@ The Zero-Box uses some popular lite framework based on the java language to buil
 
 * Support the common util. I collect some util for common developing and will try to optimize them in the future.
 
-* Support some beta framework tool like muliti thread insert tool with transaction promised in spring.
+* Support some beta framework tool like multiple threads insert tool with transaction promised in spring.
+
+* Support config file for docker remote debug with clion, you can check out docker-clion directory, and here I write an [example for redis](https://qqtim.club/2021/07/17/gdb-debug-remote/). 
+
+* Support rule match with bitmap, you can check out doc/rule-match.pptx, and code location is `club.qqtim.dimension.DimensionCalculator`
 
 # Requirements
 * JDK: 8 or greater
