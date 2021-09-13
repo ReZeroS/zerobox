@@ -11,7 +11,7 @@ The Zero-Box uses some popular lite framework based on the java language to buil
 
 * Support config file for docker remote debug with clion, you can check out docker-clion directory, and here I write an [example for redis](https://qqtim.club/2021/07/17/gdb-debug-remote/). 
 
-* Support rule match with bitmap, you can check out doc/rule-match.pptx, and code location is `club.qqtim.dimension.DimensionCalculator`
+* Support rule match with bitmap, you can check out doc/rule-match.pptx, and code location is `club.qqtim.dimension.DimensionCalculator`. Hope this [introduce video](https://www.bilibili.com/video/bv1dq4y1N7EM) would work for you.
 
 # Requirements
 * JDK: 8 or greater
