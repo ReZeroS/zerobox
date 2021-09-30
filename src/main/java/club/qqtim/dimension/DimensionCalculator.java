@@ -24,18 +24,18 @@ import java.util.stream.Stream;
 
 /**
  * 缺陷：
- *  1.2  1 2 3 =>
- *  无法解决状态数量过多的问题，即一个维度最多只有63个维值
- *  状态必须规范化(无限->有限)才能对比，即可选的被对比维值b需要包括所有的对比维值a
+ * 1.2  1 2 3 =>
+ * 无法解决状态数量过多的问题，即一个维度最多只有63个维值
+ * 状态必须规范化(无限->有限)才能对比，即可选的被对比维值b需要包括所有的对比维值a
  * 使用方式
- *  1. LEFT_EXPRESSION_FUNC_MAP 中初始化对应的维度接口
- *  2. 字典表rule-dict中右维度添加对应的维值
- *  3. OperatorType 定义想要添加的运算方式
+ * 1. LEFT_EXPRESSION_FUNC_MAP 中初始化对应的维度接口
+ * 2. 字典表rule-dict中右维度添加对应的维值
+ * 3. OperatorType 定义想要添加的运算方式
  */
 @Data
 @Slf4j
 @RequiredArgsConstructor
-public class DimensionCalculator <IU>{
+public class DimensionCalculator<IU> {
 
 
     /**
@@ -70,12 +70,9 @@ public class DimensionCalculator <IU>{
 
     /**
      * 消费支持
+     * key 组id val 组内分配的输入单元
      */
     private final Consumer<Map<Long, List<IU>>> consumerSupport;
-
-
-
-
 
 
     /**
@@ -88,40 +85,36 @@ public class DimensionCalculator <IU>{
     private enum Operator {
 
         /**
-         * 暂时不允许出现这种运算符，出现代表表达式有问题，仅用来免除空指针报黄警告
+         * a 完全包含于 b， 即 a 是 b 的子集 [1] 值 对 集 [2] 集 对 集
+         * 比如  a [1] 完全包含于 b [1, 2]
          */
-        UNDEFINED("UNDEFINED", "未定义", (a, b) -> false),
+        INCLUDE("INCLUDE", "包含于", (avc, bc) -> (avc & bc) == avc),
 
         /**
-         * a 包含于 b， 即 a 是 b 的子集
-         * 值 对 集
+         * a 完全不包含于 b， 即 a b 交集为空,
          */
-        INCLUDE("INCLUDE", "包含于", (a, b) ->  (a & b) == a),
+        NOT_INCLUDE("NOT_INCLUDE", "不包含于", (avc, bc) -> (avc & bc) == 0),
 
         /**
-         * a 完全不包含于 b， 即 a b 交集为空
+         * a 被包含于 b 即 b 是 a的子集 常见 树路径
+         * 比如 a = "DeptA/DeptB/DeptC", b = "DeptA/DeptB", a 是 b的子部门
          */
-        NOT_INCLUDE("NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == 0),
+        BE_INCLUDED("NOT_INCLUDE", "不包含于", (ac, bc) -> (ac & bc) == bc),
 
         /**
-         * a 被包含于 b， 即 b 是 a的子集 可用于 树,路径 比如 a = "DeptA/DeptB/DeptC", b = "DeptA/DeptB", a 是 b的子部门
+         * a  b 有交集 即 a 中只要有一个状态 在 b 中存在即可， 多用于 a为 状态集合时
+         * 比如 a ['java', 'c'] 交集 b['c', 'lisp']
          */
-        BE_INCLUDED("NOT_INCLUDE", "不包含于", (a, b) ->  (a & b) == b),
-
-        /**
-         * a  b 有交集
-         * 即 a 中只要有一个状态 在 b 中存在即可， 多用于 a为 状态集合时
-         */
-        RETAIN("RETAIN", "交集", (a, b) ->  (a & b) > 0),
+        RETAIN("RETAIN", "交集", (ac, bc) -> (ac & bc) > 0),
 
         // 值运算部分，要求维值实现comparable
         /**
          * a > b
          */
-        GT("GT", "大于", (a, b) ->  a > b),
-        GE("GE", "大于等于", (a, b) ->  a >= b),
-        LT("LT", "小于", (a, b) ->  a < b),
-        LE("LE", "小于等于", (a, b) ->  a <= b),
+        GT("GT", "大于", (a, b) -> a > b),
+        GE("GE", "大于等于", (a, b) -> a >= b),
+        LT("LT", "小于", (a, b) -> a < b),
+        LE("LE", "小于等于", (a, b) -> a <= b),
         /**
          * a == b
          */
@@ -132,18 +125,29 @@ public class DimensionCalculator <IU>{
         NE("NE", "不等于", (a, b) -> !Objects.equals(a, b)),
 
         EXIST("EXIST", "存在", (a, b) -> a > 0),
+
+        /**
+         * 暂时不允许出现这种运算符，出现代表表达式有问题，仅用来免除空指针报黄警告
+         */
+        UNDEFINED("UNDEFINED", "未定义", (a, b) -> false),
         ;
 
 
-        /** 权限限制类型代码 */
+        /**
+         * 权限限制类型代码
+         */
         private final String code;
-        /** 限制类型描述类型名称*/
+        /**
+         * 限制类型描述类型名称
+         */
         private final String name;
-        /** 运算表达式 **/
+        /**
+         * 运算表达式
+         **/
         private final BiPredicate<Long, Long> expected;
 
 
-        public static Operator parse(String code){
+        public static Operator parse(String code) {
             for (Operator operator : Operator.values()) {
                 if (operator.getCode().equals(code)) {
                     return operator;
@@ -155,7 +159,6 @@ public class DimensionCalculator <IU>{
     }
 
 
-
     public void calc() {
         // 建立位图映射
         Map<String, Map<Object, Long>> dimensionValBitMap = buildDimensionValMap();
@@ -164,15 +167,12 @@ public class DimensionCalculator <IU>{
     }
 
 
-
-
-
     /**
      * 根据全部输入单元和规则配置生成所选维度
      * key 是维度（编码） NAME，AGE    key 维度值    val 维度值对应的 bitmap
      * key dimension, val <key: dimensionVal, val: dimensionValBit>
      */
-    private Map<String, Map<Object, Long>>  buildDimensionValMap() {
+    private Map<String, Map<Object, Long>> buildDimensionValMap() {
         // 将这些值的下标作为位图下标映射成一个64位数
         // key dimension, val <key: dimensionVal, val: dimensionValBit>
         Map<String, Map<Object, Long>> dimensionValBitMap = new HashMap<>(2);
@@ -238,7 +238,7 @@ public class DimensionCalculator <IU>{
                     final Object leftDimensionVal = expressionFuncMap.get(leftExpression).apply(inputUnit);
                     Long leftDimensionValBit = leftDimensionVal instanceof Collection
                             ? ((Collection<?>) leftDimensionVal).stream()
-                                    .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b)
+                            .map(currentDimensionValBitMap::get).reduce(0L, (a, b) -> a | b)
                             : currentDimensionValBitMap.get(leftDimensionVal);
 
                     // 同样的右边的表达式也对应一个数(由右边的所有选中的值或运算得来）
@@ -278,13 +278,22 @@ public class DimensionCalculator <IU>{
 
 
     public static void main(String[] args) {
+        // 注册维度维值函数
+        Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(4);
+        functionMap.put("ID", InputUnit::getId);
+        functionMap.put("NAME", InputUnit::getName);
+        functionMap.put("AGE", InputUnit::getAge);
+        functionMap.put("WEAPON", InputUnit::getWeaponList);
+        functionMap.put("SUB_UNIT", InputUnit::getSubUnit);
+
+
         // 输入单元
         List<InputUnit> inputUnits = new ArrayList<>();
-        inputUnits.add(new InputUnit(1L, "Li", 8, Arrays.asList("001", "002")));
-        inputUnits.add(new InputUnit(2L, "Chu", 10, Arrays.asList("002", "003")));
-        inputUnits.add(new InputUnit(3L, "Yun", 11, Arrays.asList("002")));
-        inputUnits.add(new InputUnit(4L, "Fei", 12, Arrays.asList("003", "002")));
-        inputUnits.add(new InputUnit(5L, "Long", 13, Arrays.asList("001", "002")));
+        inputUnits.add(new InputUnit(1L, "Li", 8, new SubUnit(1), Arrays.asList("001", "002")));
+        inputUnits.add(new InputUnit(2L, "Chu", 10, new SubUnit(2), Arrays.asList("002", "003")));
+        inputUnits.add(new InputUnit(3L, "Yun", 11, new SubUnit(3), Arrays.asList("002")));
+        inputUnits.add(new InputUnit(4L, "Fei", 12, new SubUnit(4), Arrays.asList("003", "002")));
+        inputUnits.add(new InputUnit(5L, "Long", 13, new SubUnit(5), Arrays.asList("001", "002")));
 
         // 计算规则组
         List<RuleGroup> ruleGroups = new ArrayList<>();
@@ -298,16 +307,23 @@ public class DimensionCalculator <IU>{
             idNotIncludeRule.setLeftExpression("ID");
             idNotIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
             idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
-            final Rule<String> nameIncludeRule = new Rule<>();
-            nameIncludeRule.setLeftExpression("NAME");
-            nameIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
-            nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
-            final Rule<String> weaponNotIncludeRule = new Rule<>(); // 2.
-            weaponNotIncludeRule.setLeftExpression("WEAPON");
-            weaponNotIncludeRule.setOperateExpression(Operator.RETAIN.getCode());
-            weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
-            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule
-                    , weaponNotIncludeRule
+//            final Rule<String> nameIncludeRule = new Rule<>();
+//            nameIncludeRule.setLeftExpression("NAME");
+//            nameIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
+//            nameIncludeRule.setRightExpression(Arrays.asList("Li", "Fei"));
+//            final Rule<String> weaponNotIncludeRule = new Rule<>(); // 2.
+//            weaponNotIncludeRule.setLeftExpression("WEAPON");
+//            weaponNotIncludeRule.setOperateExpression(Operator.RETAIN.getCode());
+//            weaponNotIncludeRule.setRightExpression(Arrays.asList("003", "004"));
+            final Rule<SubUnit> subUnitGreatRule = new Rule<>();
+            subUnitGreatRule.setLeftExpression("SUB_UNIT");
+            subUnitGreatRule.setOperateExpression(Operator.GT.getCode());
+            subUnitGreatRule.setRightExpression(Arrays.asList(new SubUnit(4)));
+
+            firstRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule
+//                    , nameIncludeRule
+//                    , weaponNotIncludeRule
+                    , subUnitGreatRule
             ));
             ruleGroups.add(firstRuleGroup);
         }
@@ -322,33 +338,33 @@ public class DimensionCalculator <IU>{
             idNotIncludeRule.setLeftExpression("ID");
             idNotIncludeRule.setOperateExpression(Operator.INCLUDE.getCode());
             idNotIncludeRule.setRightExpression(Arrays.asList(2L, 3L));
-            final Rule<String> nameIncludeRule = new Rule<>();
-            nameIncludeRule.setLeftExpression("NAME");
-            nameIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
-            nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
-            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
-            final Rule<Integer> ageGtRule = new Rule<>();   //3.
-            ageGtRule.setLeftExpression("AGE");
-            ageGtRule.setOperateExpression(Operator.GT.getCode());
-            ageGtRule.setRightExpression(Arrays.asList(10));
-            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule
-                    , ageGtRule
+//            final Rule<String> nameIncludeRule = new Rule<>();
+//            nameIncludeRule.setLeftExpression("NAME");
+//            nameIncludeRule.setOperateExpression(Operator.NOT_INCLUDE.getCode());
+//            nameIncludeRule.setRightExpression(Arrays.asList("Fei", "haha"));
+//            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule, nameIncludeRule));
+//            final Rule<Integer> ageGtRule = new Rule<>();   //3.
+//            ageGtRule.setLeftExpression("AGE");
+//            ageGtRule.setOperateExpression(Operator.GT.getCode());
+//            ageGtRule.setRightExpression(Arrays.asList(10));
+            secondRuleGroup.setBindRuleList(Arrays.asList(idNotIncludeRule
+//                    , nameIncludeRule
+//                    , ageGtRule
             ));
             ruleGroups.add(secondRuleGroup);
         }
 
 
-        // 注册维度维值函数
-        Map<String, Function<InputUnit, Object>> functionMap = new HashMap<>(4);
-        functionMap.put("ID", InputUnit::getId);
-        functionMap.put("NAME", InputUnit::getName);
-        functionMap.put("AGE", InputUnit::getAge);
-        functionMap.put("WEAPON", InputUnit::getWeaponList);
-
         DimensionCalculator<InputUnit> calculator = new DimensionCalculator<>(
                 inputUnits, ruleGroups, functionMap,
-
-                map -> map.forEach((key, value) -> log.info("k {} v{} ", key, value))
+                // consumer
+                groupInputsMap -> groupInputsMap.forEach((group, unitList) -> {
+                            log.info("第 {} 组 分配的人", group);
+                            for (InputUnit inputUnit : unitList) {
+                                log.info(String.valueOf(inputUnit));
+                            }
+                        }
+                )
         );
 
         calculator.calc();

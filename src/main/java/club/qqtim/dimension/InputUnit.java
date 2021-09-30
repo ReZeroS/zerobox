@@ -19,7 +19,8 @@ public class InputUnit {
 
     private Integer age;
 
-    private List<String> weaponList;
+    private SubUnit subUnit;
 
+    private List<String> weaponList;
 
 }
