@@ -31,6 +31,8 @@ import java.util.stream.Stream;
  * 1. LEFT_EXPRESSION_FUNC_MAP 中初始化对应的维度接口
  * 2. 字典表rule-dict中右维度添加对应的维值
  * 3. OperatorType 定义想要添加的运算方式
+ *
+ * 维值 建议存在有序性，不仅是为了扩充运算能力，对于 【region sort】-> [reduce with total sort] 也有一定的益处
  */
 @Data
 @Slf4j
@@ -198,7 +200,7 @@ public class DimensionCalculator<IU> {
                                     // 取出对应的右维度值
                                     .map(Rule::getRightExpression).flatMap(Collection::stream)) // Stream<ou>
                     .flatMap(Function.identity()).distinct() // 去重：左右的存在的维度值均可能出现自身重复或者交叉重复
-                    .sorted().collect(Collectors.toList()); // 排序 为了满足值比较
+                    .sorted().collect(Collectors.toList()); // 排序 为了满足值比较 【为了分区有序性】
 
             if (allValues.size() > DIMENSION_LIMIT) {
                 throw new IllegalArgumentException("暂不支持单维度超过63个维值");
