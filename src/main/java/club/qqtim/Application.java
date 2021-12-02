@@ -7,6 +7,8 @@ import club.qqtim.factory.support.LiquibaseFactory;
 import club.qqtim.manager.Manager;
 import club.qqtim.manager.support.LiquibaseManager;
 import club.qqtim.meta.ClassPathResource;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * @version: 1.0
@@ -14,18 +16,21 @@ import club.qqtim.meta.ClassPathResource;
  * @date: 2020/4/3
  * @description:
  */
+@SpringBootApplication
 public class Application {
 
 
     public static void main(String[] args) {
-        ManagerConfig config = new ManagerConfig();
-        config.setReader(new LiquibaseXmlReader());
-        config.setAbstractFactory(new LiquibaseFactory());
-        config.setResource(new ClassPathResource("xml/master.xml"));
-        config.setExecutor(new LiquibaseValidExecutor("valid.json"));
-        Manager liquibaseManager = new LiquibaseManager(config);
-        liquibaseManager.manage();
-        liquibaseManager.execute();
+//        ManagerConfig config = new ManagerConfig();
+//        config.setReader(new LiquibaseXmlReader());
+//        config.setAbstractFactory(new LiquibaseFactory());
+//        config.setResource(new ClassPathResource("xml/master.xml"));
+//        config.setExecutor(new LiquibaseValidExecutor("valid.json"));
+//        Manager liquibaseManager = new LiquibaseManager(config);
+//        liquibaseManager.manage();
+//        liquibaseManager.execute();
+//
+        new SpringApplication(Application.class).run(args);
     }
 
 }
