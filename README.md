@@ -1,5 +1,5 @@
 # Introduction
-# <img src="./logo.png" width="250px" align="center" alt="ZeroBox"/>
+
 The Zero-Box uses some popular lite framework based on the java language to build a collection of tools for common developping.
 
 # Features
