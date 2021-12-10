@@ -1,14 +1,9 @@
 package club.qqtim;
 
-import club.qqtim.config.ManagerConfig;
-import club.qqtim.executor.support.LiquibaseValidExecutor;
-import club.qqtim.factory.reader.LiquibaseXmlReader;
-import club.qqtim.factory.support.LiquibaseFactory;
-import club.qqtim.manager.Manager;
-import club.qqtim.manager.support.LiquibaseManager;
-import club.qqtim.meta.ClassPathResource;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 /**
  * @version: 1.0
@@ -16,7 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @date: 2020/4/3
  * @description:
  */
-@SpringBootApplication
+@SpringBootApplication(exclude={DataSourceAutoConfiguration.class})
 public class Application {
 
 
