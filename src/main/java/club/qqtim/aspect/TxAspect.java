@@ -20,7 +20,7 @@ public class TxAspect {
 
 
 
-    @Pointcut("execution(* club.qqtim.aspect.AbstractTestClass.testMethod(..))")
+    @Pointcut("execution(* club.qqtim.aspect.*.fillB(..)) && target(club.qqtim.aspect.BClass)")
     public void methodsToBeProfiled(){}
 
     @Around("methodsToBeProfiled()")
@@ -29,8 +29,8 @@ public class TxAspect {
         log.info("I am not going to do anything");
         final boolean callFromhh = Arrays.stream(stackTrace)
                 .anyMatch(stack ->
-                        stack.getClassName().equalsIgnoreCase("club.qqtim.aspect.ImplAbstract")
-                                && stack.getMethodName().equalsIgnoreCase("hh")
+                        stack.getClassName().equalsIgnoreCase("club.qqtim.aspect.AbstractTestClass")
+                                && stack.getMethodName().equalsIgnoreCase("fillInfo")
                 );
         if (!callFromhh) {
             pjp.proceed();

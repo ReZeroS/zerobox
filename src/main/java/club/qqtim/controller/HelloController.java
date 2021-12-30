@@ -1,11 +1,9 @@
 package club.qqtim.controller;
 
-import club.qqtim.aspect.AbstractTestClass;
-import club.qqtim.aspect.ImplAbstract;
+import club.qqtim.aspect.AClass;
 import club.qqtim.dimension.InputUnit;
 import club.qqtim.dimension.SubUnit;
 import club.qqtim.util.PDFGenerator;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -25,12 +23,12 @@ public class HelloController {
 
 
     @Autowired
-    private club.qqtim.aspect.ImplAbstract implAbstract;
+    private AClass AClass;
 
 
     @GetMapping("/h")
     public InputUnit export(){
-        implAbstract.hh();
+        AClass.fill();
         return new InputUnit(1L, "Li", 8, new SubUnit(1), Arrays.asList("001", "002"));
     }
 

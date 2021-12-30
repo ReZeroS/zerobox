@@ -5,11 +5,14 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public abstract class AbstractTestClass {
+public abstract class BClass {
 
 
-    public void testMethod(){
-        log.info("hello");
+    public void fillInfo(){
+        fillB();
     }
+
+    void fillB(){}
+
 
 }
