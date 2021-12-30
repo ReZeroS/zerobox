@@ -9,9 +9,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+
 @Slf4j
 @Aspect
-@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @Component
 @Configuration
 public class TxAspect {
@@ -23,7 +25,15 @@ public class TxAspect {
 
     @Around("methodsToBeProfiled()")
     public void test(ProceedingJoinPoint pjp) throws Throwable {
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         log.info("I am not going to do anything");
-        pjp.proceed();
+        final boolean callFromhh = Arrays.stream(stackTrace)
+                .anyMatch(stack ->
+                        stack.getClassName().equalsIgnoreCase("club.qqtim.aspect.ImplAbstract")
+                                && stack.getMethodName().equalsIgnoreCase("hh")
+                );
+        if (!callFromhh) {
+            pjp.proceed();
+        }
     }
 }
