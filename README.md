@@ -30,4 +30,5 @@ Welcome to contribute by creating issues or sending pull requests. See [Contribu
 # License
 Zero-Box is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file.
 
-# Thanks JetBrains https://www.jetbrains.com/?from=leet-code
+
+## Thanks JetBrains https://www.jetbrains.com/?from=leet-code
