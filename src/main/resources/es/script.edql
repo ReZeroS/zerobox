@@ -1,0 +1,188 @@
+HOST http://localhost:9200
+Timeout 1000
+POST objective/_doc/4
+{
+  "periodId": 1,
+  "userId": "333222",
+  "objectiveList": [
+    {
+      "status": 2,
+      "score": 0.2
+    },
+    {
+      "status": 1,
+      "score": 1
+    }
+  ],
+  "leaders": "zhangpengfei",
+  "orgPaths": [
+    6666666,
+    777777
+  ],
+  "exec_date": "2021-06-11"
+}
+
+GET objective/_mapping
+
+
+POST objective/_doc
+{
+  "periodId": 1,
+  "userId": "222",
+  "objectiveList": [{
+    "status": 2,
+    "score": 0.3
+  }, {
+    "status": 1,
+    "score": 2.0
+  }],
+  "exec_date": "2021-06-11"
+}
+
+GET objective/_search
+{
+  "query": {
+    "term": {
+      "periodId": 1
+    }
+  }
+}
+
+
+GET objective/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "orgPaths": "777777"
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "NAME": {
+      "AGG_TYPE": {}
+    }
+  }
+}
+
+DELETE objective
+
+{
+  "objective" : {
+    "mappings" : {
+      "properties" : {
+        "exec_date" : {
+          "type" : "date",
+          "index": "not_analyzed"
+        },
+        "leaders" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "objectiveList" : {
+          "properties" : {
+            "score" : {
+              "type" : "float"
+            },
+            "status" : {
+              "type" : "long"
+            }
+          }
+        },
+        "periodId" : {
+          "type" : "long"
+        },
+        "query" : {
+          "properties" : {
+            "term" : {
+              "properties" : {
+                "period" : {
+                  "type" : "long"
+                }
+              }
+            }
+          }
+        },
+        "userId" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+## 聚合状态
+
+GET objective/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "orgPaths": "777777"
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "statusMertric": {
+      "terms": {
+        "field": "objectiveList.status"
+        }
+    }
+  }
+}
+
+# 聚合 分数
+GET objective/_search
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "orgPaths": "777777"
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "scoreRange": {
+      "range": {
+        "field": "objectiveList.score",
+        "keyed": true,
+        "ranges": [
+          {
+            "to": 0.3
+          },
+          {
+            "from": 0.3,
+            "to": 0.8
+          },
+          {
+            "from": 0.8
+          }
+        ]
+      }
+    }
+  }
+}
