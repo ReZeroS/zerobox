@@ -22,7 +22,7 @@ public class ElasticConfig {
     public ElasticsearchClient elasticsearchClient(){
         // Create the low-level client
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("elastic", "123456"));
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("elastic", "8JMs3v3hn3ekzohbTB3q"));
 
         RestClient restClient = RestClient.builder(
                         new HttpHost("127.0.0.1", 9200))

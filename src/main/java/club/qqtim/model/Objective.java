@@ -10,5 +10,5 @@ public class Objective {
     @JsonProperty("status")
     private Integer status;
     @JsonProperty("score")
-    private Double score;
+    private Float score;
 }

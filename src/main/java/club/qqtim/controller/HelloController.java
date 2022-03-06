@@ -60,7 +60,7 @@ public class HelloController {
     @GetMapping("/es")
     public ResponseEntity<List<UserObjective>> esList() throws IOException {
 
-        final SearchResponse<UserObjective> search = elasticsearchClient.search(s -> s.index("objective").query(q ->
+        final SearchResponse<UserObjective> search = elasticsearchClient.search(s -> s.index("objectives").query(q ->
                     q.term(t -> t.field("periodId").value(v -> v.longValue(1L)))
                 ), UserObjective.class);
 

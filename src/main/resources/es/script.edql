@@ -1,6 +1,56 @@
 HOST http://localhost:9200
 Timeout 1000
-POST objective/_doc/4
+
+# 建索引
+PUT /objectives/_mapping
+{
+  "objectives" : {
+    "mappings" : {
+      "properties" : {
+        "exec_date" : {
+          "type" : "date"
+        },
+        "leaders" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "objectiveList" : {
+          "properties" : {
+            "score" : {
+              "type" : "float"
+            },
+            "status" : {
+              "type" : "long"
+            }
+          }
+        },
+        "orgPaths" : {
+          "type" : "long"
+        },
+        "periodId" : {
+          "type" : "long"
+        },
+        "userId" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# 设置一个值
+POST objectives/_doc/4
 {
   "periodId": 1,
   "userId": "333222",
@@ -11,7 +61,7 @@ POST objective/_doc/4
     },
     {
       "status": 1,
-      "score": 1
+      "score": 1.0
     }
   ],
   "leaders": "zhangpengfei",
