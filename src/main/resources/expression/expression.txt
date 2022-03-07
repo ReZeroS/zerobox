@@ -1,3 +1,15 @@
 \b(.*)\(\"(.*)\", \"(.*)\"\)
 
 \b$3\(\"$2\", \"$3\"\)
+
+
+/**
+ * 进度为0-10的objective数量
+*/
+
+=>  @ApiModelProperty(value = "objective数量")
+
+```regex
+/\*\*\s+\* (.*)\s*\*/
+ @ApiModelProperty(value = "$1")
+```
