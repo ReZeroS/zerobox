@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -34,6 +35,7 @@ public class Application {
         }
     }
     public static void main(String[] args) {
+        System.out.println(UUID.randomUUID().toString().replace("-", "").length());
 //        final Application application = new Application();
 //        application.init();
 //        application.sss();
@@ -51,7 +53,7 @@ public class Application {
 //            maxPrefix = "".charAt(0) + "";
 //
 //        }
-        new SpringApplication(Application.class).run(args);
+//        new SpringApplication(Application.class).run(args);
     }
 
 }

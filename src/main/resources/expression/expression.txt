@@ -7,7 +7,9 @@
  * 进度为0-10的objective数量
 */
 
-=>  @ApiModelProperty(value = "objective数量")
+=>
+
+@ApiModelProperty(value = "objective数量")
 
 ```regex
 /\*\*\s+\* (.*)\s*\*/
