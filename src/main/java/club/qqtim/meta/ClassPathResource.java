@@ -1,7 +1,7 @@
 package club.qqtim.meta;
 
 
-import club.qqtim.util.ClassUtils;
+import club.qqtim.util.reflect.ClassUtils;
 import club.qqtim.util.StringUtils;
 
 import java.io.FileNotFoundException;

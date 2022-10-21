@@ -1,5 +1,6 @@
-package club.qqtim.util;
+package club.qqtim.util.reflect;
 
+import club.qqtim.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
