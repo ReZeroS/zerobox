@@ -5,6 +5,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -34,7 +40,31 @@ public class Application {
             }
         }
     }
+
+
+    public static <T> Optional<T> ofEmpty(T value) {
+        if (value == null) {
+            return Optional.empty();
+        } else {
+            if (value instanceof Collection) {
+                final Collection collection = (Collection) value;
+                if (collection.isEmpty()) {
+                    return Optional.empty();
+                }
+            }
+        }
+
+        return Optional.of(value);
+    }
+
+
     public static void main(String[] args) {
+        final List<String> list = new ArrayList<>();
+
+        ofEmpty(list).map(ids -> {
+            System.out.println(ids);
+            return Arrays.asList("111");
+        }).orElse(Collections.emptyList());
         System.out.println(UUID.randomUUID().toString().replace("-", "").length());
 //        final Application application = new Application();
 //        application.init();
