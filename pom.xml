@@ -21,9 +21,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>reflectasm</artifactId>
+            <version>1.11.9</version>
+        </dependency>
+        <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>QLExpress</artifactId>
-            <version>3.2.0</version>
+            <version>3.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
