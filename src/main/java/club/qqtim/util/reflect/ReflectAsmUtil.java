@@ -31,13 +31,7 @@ public class ReflectAsmUtil {
 
     public Object invoke(Object target, String methodName, Object ...params) {
         String className = target.getClass().getName();
-        MethodAccess access;
-        if (methodAccessMap.containsKey(className)) {
-            access = methodAccessMap.get(className);
-        } else {
-            access = MethodAccess.get(target.getClass());
-            methodAccessMap.put(className, access);
-        }
+        MethodAccess access = methodAccessMap.computeIfAbsent(className, cn -> MethodAccess.get(target.getClass()));
         return access.invoke(target, methodName, params);
     }
 
