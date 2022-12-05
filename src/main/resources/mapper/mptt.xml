@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="club.qqtim.tree.MpttMapper">
+
+    <update id="decrLeft">
+        update talent_pool
+        set mptt_left = mptt_left - #{diff}
+        where tenant_id = #{tenantId} and mptt_left > #{left}
+    </update>
+
+    <update id="decrRight">
+        update talent_pool
+        set mptt_right = mptt_right - #{diff}
+        where tenant_id = #{tenantId} and mptt_right > #{right}
+    </update>
+
+
+    <update id="incrLeft">
+        update talent_pool
+        set mptt_left = mptt_left + #{diff}
+        where tenant_id = #{tenantId} and mptt_left > #{incrBase}
+    </update>
+
+
+    <update id="incrRight">
+        update talent_pool
+        set mptt_right = mptt_right + #{diff}
+        where tenant_id = #{tenantId} and mptt_right > #{incrBase}
+    </update>
+
+    <update id="incrEqRight">
+        update talent_pool
+        set mptt_right = mptt_right + #{diff}
+        where tenant_id = #{tenantId} and mptt_right >= #{incrBase}
+    </update>
+    <select id="findMaxRight" resultType="java.lang.Integer">
+        select max(mptt_right) from talent_pool
+        where tenant_id = #{tenantId} and parent_id = #{parentId}
+    </select>
+</mapper>
