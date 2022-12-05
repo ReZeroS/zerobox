@@ -6,6 +6,12 @@ public class CntDownLatch {
 
     private static class Sync extends AbstractQueuedSynchronizer {
 
+
+        public Sync(int cnt) {
+            setState(cnt);
+        }
+
+
         @Override
         protected boolean tryAcquire(int arg) {
             return super.tryAcquire(arg);
@@ -21,16 +27,10 @@ public class CntDownLatch {
             return super.isHeldExclusively();
         }
 
-        public Sync(int cnt) {
-            setState(cnt);
-        }
-
-
         @Override
         protected int tryAcquireShared(int arg) {
             return getState() == 0? 1: -1;
         }
-
 
         @Override
         protected boolean tryReleaseShared(int arg) {

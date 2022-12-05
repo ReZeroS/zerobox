@@ -165,6 +165,7 @@ public class LruCache <K, V> {
     }
 
     public static void main(String[] args) {
+
         LruCache<Integer, Integer> cache = new LruCache<>(2);
         cache.put(1, 1);
 // cache = [(1, 1)]
@@ -187,6 +188,10 @@ public class LruCache <K, V> {
 // 解释：键 1 已存在，把原始值 1 覆盖为 4
 // 不要忘了也要将键值对提前到队头
     }
+
+
+
+
 
 
 }
