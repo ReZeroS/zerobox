@@ -15,6 +15,4 @@ public interface MpttMapper {
     void incrRight(@Param("tenantId")String tenantId, @Param("incrBase") Integer right, @Param("diff") int diff);
 
 
-    void incrEqRight(@Param("tenantId")String tenantId, @Param("right") Integer right, @Param("diff") int diff);
-
 }
